@@ -1,5 +1,5 @@
 import { AbstractHttpAdapter } from '@nestjs/core';
-import { NestApplicationOptions, RequestMethod } from '@nestjs/common';
+import { RequestMethod } from '@nestjs/common';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { loadPackage } from '@nestjs/common/utils/load-package.util';
 import { isNil } from '@nestjs/common/utils/shared.utils';
@@ -39,19 +39,19 @@ export class NanoexpressHttpAdapter extends AbstractHttpAdapter {
     return this.instance.listen(Number(port), hostname);
   }
 
-  close() {
+  close(): boolean {
     return this.instance.close();
   }
 
   createMiddlewareFactory(
     requestMethod: RequestMethod,
-  ): (path: string, callback: Function) => any {
+  ): (path: string, callback: any) => any {
     return this.routerMethodFactory
       .get(this.instance, requestMethod)
       .bind(this.instance);
   }
 
-  enableCors(options: CorsOptions) {
+  enableCors(options: CorsOptions): nanoexpress.nanoexpressApp {
     const corsMiddleware: any = cors(options);
     return this.instance.use(corsMiddleware);
   }
@@ -65,11 +65,11 @@ export class NanoexpressHttpAdapter extends AbstractHttpAdapter {
     return request.method;
   }
 
-  getRequestUrl(request): string {
+  getRequestUrl(request: nanoexpress.HttpRequest): string {
     return request.url;
   }
 
-  initHttpServer(options: NestApplicationOptions) {
+  initHttpServer(): void {
     this.httpServer = this.instance;
   }
 
@@ -77,20 +77,24 @@ export class NanoexpressHttpAdapter extends AbstractHttpAdapter {
     response: nanoexpress.HttpResponse,
     statusCode: number,
     url: string,
-  ) {
+  ): nanoexpress.HttpResponse {
     return response.redirect(statusCode, url);
   }
 
-  registerParserMiddleware(prefix: string | undefined) {
+  registerParserMiddleware(): void {
     // Build-in
   }
 
-  reply(response: nanoexpress.HttpResponse, body: any, statusCode?: number) {
+  reply(
+    response: nanoexpress.HttpResponse,
+    body: any,
+    statusCode?: number,
+  ): nanoexpress.HttpResponse {
     if (statusCode) {
       response.status(statusCode);
     }
     if (isNil(body)) {
-      return response.end();
+      return <nanoexpress.HttpResponse>response.end();
     }
     return response.send(body);
   }
@@ -101,12 +105,15 @@ export class NanoexpressHttpAdapter extends AbstractHttpAdapter {
       req: nanoexpress.HttpRequest,
       res: nanoexpress.HttpResponse,
     ) => any,
-    prefix?: string,
-  ) {
+  ): nanoexpress.nanoexpressApp {
     return this.instance.setErrorHandler(handler);
   }
 
-  setHeader(response: nanoexpress.HttpResponse, name: string, value: string) {
+  setHeader(
+    response: nanoexpress.HttpResponse,
+    name: string,
+    value: string,
+  ): nanoexpress.HttpResponse {
     return response.setHeader(name, value);
   }
 
@@ -115,12 +122,14 @@ export class NanoexpressHttpAdapter extends AbstractHttpAdapter {
       req: nanoexpress.HttpRequest,
       res: nanoexpress.HttpResponse,
     ) => any,
-    prefix: string | undefined,
-  ) {
+  ): nanoexpress.nanoexpressApp {
     return this.instance.setNotFoundHandler(handler);
   }
 
-  status(response: nanoexpress.HttpResponse, statusCode: number) {
+  status(
+    response: nanoexpress.HttpResponse,
+    statusCode: number,
+  ): nanoexpress.HttpResponse {
     return response.status(statusCode);
   }
 
@@ -145,7 +154,7 @@ export class NanoexpressHttpAdapter extends AbstractHttpAdapter {
     return this;
   }
 
-  render(response: nanoexpress.HttpResponse, view: string, options: any) {
+  render(response: nanoexpress.HttpResponse, view: string, options?: any): any {
     return this.engine(this.baseViewsDir + view, options);
   }
 
